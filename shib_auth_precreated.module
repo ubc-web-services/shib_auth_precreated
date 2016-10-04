@@ -1,0 +1,41 @@
+<?php
+
+# If you want to exclude User 1 or something similar
+# set this to 'uid > 1'
+define('USER_WHERE_CRITERIA', '1 = 1');  
+
+/*
+ * Implement hook_menu
+ * Defines a path where this command can be run from so you can stick it in the admin menu
+ */ 
+function shib_auth_precreated_menu() {
+	
+	$items['admin/config/people/shib_auth/precreated'] = array(
+    	'title' => 'Configure Pre-Created Users',
+	    'page callback' => 'shib_auth_precreated_configure_precreated_users',
+	    'access arguments' => array('administer users'),
+    );
+
+ 	return $items;
+ 	
+}
+
+/*
+ * Change Drupal Users to be Shib Users
+ */
+function shib_auth_precreated_configure_precreated_users() {
+
+	try {
+		db_query("INSERT INTO {shib_authmap} (uid, targeted_id) SELECT uid, name FROM {users} WHERE ".USER_WHERE_CRITERIA." AND (uid) NOT IN (SELECT uid FROM {shib_authmap})", array());
+	
+		db_query("INSERT INTO {authmap} (uid, authname) SELECT uid, targeted_id FROM {shib_authmap} WHERE (uid) NOT IN (SELECT uid FROM {authmap})", array());
+		
+		db_query("UPDATE {authmap} SET module = :md WHERE (uid) IN (SELECT uid FROM {shib_authmap})", array(':md' => 'shib_auth'));
+	}
+	catch(Exception $e) {
+	  return "<h2>Error: your new pre-created users have not been configured for use with Shibboleth login</h2>";
+	}
+	
+	return "<h2>Success! Your pre-created users are correctly configured for Shibboleth login</h2>";
+	
+}

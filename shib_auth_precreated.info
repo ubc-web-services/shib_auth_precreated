@@ -1,0 +1,5 @@
+name = Shibboleth Pre-Created Users
+description = Shibboleth Pre-Created Users
+package = Shibboleth
+core = 7.x
+dependencies[] = shib_auth
